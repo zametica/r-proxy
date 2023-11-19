@@ -9,20 +9,35 @@ events {
 }
 
 http {
+	  gzip on;
+	  gzip_comp_level 2;
+	  gzip_min_length 512;
+	  gzip_proxied any;
+
+    server_tokens off;
+
     log_format l2met 'measure#nginx.service=$request_time request_id=$http_x_request_id';
     access_log <%= ENV['NGINX_ACCESS_LOG_PATH'] || 'logs/nginx/access.log' %> l2met;
     error_log <%= ENV['NGINX_ERROR_LOG_PATH'] || 'logs/nginx/error.log' %>;
 
+    include mime.types;
+	  default_type application/octet-stream;
+	  sendfile on;
+
+    proxy_ssl_server_name on;
+
     server {
       listen <%= ENV["PORT"] %>;
-      server_name _;
-      keepalive_timeout 5;
+      server_name proxy.zametica.com;
 
 	    location / {
-          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-          proxy_set_header Host $http_host;
-			    proxy_redirect off;
 	        proxy_pass https://app.comparativeagility.com;
+          proxy_ssl_name app.comparativeagility.com;
+          proxy_set_header Host app.comparativeagility.com;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+          proxy_redirect off;
 	    }
     }
 }
