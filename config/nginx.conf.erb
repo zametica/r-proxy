@@ -14,9 +14,14 @@ http {
     error_log <%= ENV['NGINX_ERROR_LOG_PATH'] || 'logs/nginx/error.log' %>;
 
     server {
-        listen <%= ENV["PORT"] %>;
+      listen <%= ENV["PORT"] %>;
+      servet_name _;
+      keepalive_timeout 5;
 
 	    location / {
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header Host $http_host;
+			    proxy_redirect off;
 	        proxy_pass https://app.comparativeagility.com;
 	    }
     }
